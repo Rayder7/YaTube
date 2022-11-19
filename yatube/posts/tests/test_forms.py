@@ -1,6 +1,7 @@
-from http import HTTPStatus
 import shutil
 import tempfile
+from http import HTTPStatus
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
