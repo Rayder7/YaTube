@@ -85,7 +85,6 @@ class PostCreateForm(TestCase):
                 text='Тестовый текст',
                 group=self.group.id,
                 author=self.user,
-                image=self.post.image
             ).exists()
         )
 
@@ -230,7 +229,6 @@ class PostCreateForm(TestCase):
         form_data = {
             'group': self.group.id,
             'text': PostCreateForm.post.text,
-            'image': self.uploaded,
         }
         response = self.authorized_client.post(
             reverse('posts:post_edit',
@@ -247,7 +245,6 @@ class PostCreateForm(TestCase):
                 group=self.group.id,
                 author=self.user,
                 pub_date=self.post.pub_date,
-                image=self.post.image
             ).exists())
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(Post.objects.count(), posts_count)
