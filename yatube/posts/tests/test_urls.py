@@ -75,6 +75,7 @@ class PostURLTests(TestCase):
         """Проверка доступности страницы для авторизованных пользователей"""
         templates_url_names_for_auth = {
             'posts/create_post.html': '/create/',
+            'posts/follow.html': '/follow/'
         }
 
         for address in templates_url_names_for_auth.values():
@@ -91,3 +92,10 @@ class PostURLTests(TestCase):
         self.assertEqual(response_edit.status_code, HTTPStatus.FOUND)
         response_create = self.guest_client.get('/create/')
         self.assertEqual(response_create.status_code, HTTPStatus.FOUND)
+
+    def test_url_follow_not_exists_for_guest(self):
+        """Проверка шаблона follow.html
+         для неавторизованных пользователей
+         """
+        response_follow = self.guest_client.get('/follow/')
+        self.assertEqual(response_follow.status_code, HTTPStatus.FOUND)

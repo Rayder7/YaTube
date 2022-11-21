@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from http import HTTPStatus
 
 from django import forms
 from django.conf import settings
@@ -9,7 +10,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Group, Post
+from ..models import Comment, Group, Post
 
 User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -49,6 +50,11 @@ class PostPagesTests(TestCase):
             author=cls.user,
             image=cls.uploaded,
         )
+        cls.comment = Comment.objects.create(
+            text='комментарий',
+            author=cls.user,
+            post=cls.post,
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -66,6 +72,9 @@ class PostPagesTests(TestCase):
             'posts/profile.html': (
                 reverse('posts:profile',
                         kwargs={'username': PostPagesTests.post.author})
+            ),
+            'posts/follow.html': (
+                reverse('posts:follow_index')
             ),
             'posts/create_post.html': (
                 reverse('posts:post_edit',
@@ -85,18 +94,6 @@ class PostPagesTests(TestCase):
         """Шаблон index сформирован с правильным контекстом"""
         response = self.authorized_client.get(reverse('posts:index'))
         self.assertEqual(response.context['page_obj'][0], self.post)
-
-    def test_cache_index(self):
-        '''Проверка кеша'''
-        response = self.authorized_client.get(reverse('posts:index'))
-        posts = response.content
-        response_old = self.authorized_client.get(reverse('posts:index'))
-        old_posts = response_old.content
-        self.assertEqual(old_posts, posts)
-        cache.clear()
-        response_new = self.authorized_client.get(reverse('posts:index'))
-        new_posts = response_new.content
-        self.assertNotEqual(old_posts, new_posts)
 
     def test_group_list_page_show_correct_context(self,):
         """Шаблон group_list сформирован с правильным контекстом"""
@@ -184,6 +181,32 @@ class PostPagesTests(TestCase):
         self.assertEqual(response.context['post'].image,
                          self.post.image)
 
+    def test_follow_auth(self):
+        """Проверка прав на подписку/отписку авторизованного пользователя"""
+        response = self.authorized_client.post(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.post.author}),
+        )
+        self.assertRedirects(response, reverse(
+            'posts:profile', kwargs={'username': self.post.author}))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+
+    def test_cache_index(self):
+        '''Проверка кеша'''
+        response = self.authorized_client.get(reverse('posts:index'))
+        posts = response.content
+        Post.objects.create(
+            text='test_new_post',
+            author=self.user,
+        )
+        response_old = self.authorized_client.get(reverse('posts:index'))
+        old_posts = response_old.content
+        self.assertEqual(old_posts, posts)
+        cache.clear()
+        response_new = self.authorized_client.get(reverse('posts:index'))
+        new_posts = response_new.content
+        self.assertNotEqual(old_posts, new_posts)
+
 
 class PaginatorViewsTest(TestCase):
     NUM_TASK: int = 13
@@ -205,23 +228,23 @@ class PaginatorViewsTest(TestCase):
             slug='test-slug2',
             description='Тестовое описание2',
         )
-        bilk_post: list = []
+        list_post: list = []
         for i in range(PaginatorViewsTest.NUM_TASK):
             if i <= PaginatorViewsTest.NUM_FIRST_GROUP:
-                bilk_post.append(
+                list_post.append(
                     Post(
                         text=f'Текст {i}',
                         group=cls.group,
                         author=cls.user,
                     ))
             else:
-                bilk_post.append(
+                list_post.append(
                     Post(
                         text=f'Текст {i}',
                         group=cls.group2,
                         author=cls.user,
                     ))
-        Post.objects.bulk_create(bilk_post)
+        Post.objects.bulk_create(list_post)
 
     def setUp(self):
         self.authorized_client = Client()

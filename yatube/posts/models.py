@@ -67,6 +67,11 @@ class Comment(models.Model):
     text = models.TextField('Содержание')
     created = models.DateTimeField('Дата публикации', auto_now_add=True)
 
+    class Meta:
+        ordering = ('-post',)
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
     def __str__(self):
         return self.text
 
@@ -82,3 +87,11 @@ class Follow(models.Model):
         on_delete=models.CASCADE,
         related_name='following',
         verbose_name='Автор')
+
+    class Meta:
+        ordering = ('-author',)
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return self.user + self.author

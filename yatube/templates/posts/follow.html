@@ -5,19 +5,10 @@
 {% block header %}Подписки{% endblock %}
 {% block content %}
 {% include 'includes/switcher.html' %}
-{% if followers.user.count != 0 %}
-  {% for follower in followers %}
-  <li>
-    Подписка на {{ follower.author }} оформлена
-    <a href="{% url 'posts:profile' follower.author  %}">все посты пользователя</a>
-  </li>
-  {% endfor %}
-  <hr>
-  {% for post in page_obj %}
-    {% include 'includes/post_list.html' with SHOW_GROUP_LINK=True SHOW_PROFILE_LINK=True %}
-  {% endfor %}
-  {% include 'includes/paginator.html' %}
-{% else %}
-    Таких еще нет.
-{% endif %}
+{% for post in page_obj %}
+  {% include 'includes/post_list.html' with SHOW_GROUP_LINK=True SHOW_PROFILE_LINK=True %}
+{% empty %} 
+  Таких еще нет.
+{% endfor %}
+{% include 'includes/paginator.html' %}
 {% endblock %}

@@ -2,30 +2,32 @@
 {% block title %}
 Профайл пользователя {{ author }}
 {% endblock %}
-<div class="mb-5">
-  {% block header %}       
-      Все посты пользователя {{ author.username }}
-  {% endblock %}
-  {% block content %}  
+{% block header %}       
+  Все посты пользователя {{ author.username }}
+{% endblock %}
+{% block content %}  
+  <div class="mb-5">
     <h3>Всего постов: {{ author.posts.count }} </h3> 
-  {% if followers %}
-    <a
-      class="btn btn-lg btn-light"
-      href="{% url 'posts:profile_unfollow' author.username %}" role="button"
-    >
-      Отписаться
-    </a>
-  {% else %}
-    <a
-      class="btn btn-lg btn-primary"
-      href="{% url 'posts:profile_follow' author.username %}" role="button"
-    >
-      Подписаться
-    </a>
-  {% endif %}
+  {% if user.is_authenticated %}  
+    {% if followers %}
+      <a
+        class="btn btn-lg btn-light"
+        href="{% url 'posts:profile_unfollow' author.username %}" role="button"
+      >
+        Отписаться
+      </a>
+    {% else %}
+      <a
+        class="btn btn-lg btn-primary"
+        href="{% url 'posts:profile_follow' author.username %}" role="button"
+      >
+        Подписаться
+      </a>
+    {% endif %}
+  {% endif %}  
 <div>
-  {% for post in page_obj %}
-    {% include 'includes/post_list.html' with SHOW_GROUP_LINK=True %}    
-  {% endfor %}
-  {% include 'includes/paginator.html' %}
+{% for post in page_obj %}
+  {% include 'includes/post_list.html' with SHOW_GROUP_LINK=True %}    
+{% endfor %}
+{% include 'includes/paginator.html' %}
 {% endblock %} 
