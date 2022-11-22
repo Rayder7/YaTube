@@ -20,18 +20,6 @@ class PostCreateForm(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='SanyaMochalin')
-        cls.small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x01\x00'
-            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
-            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
-            b'\x00\x00\x01\x00\x01\x00\x00\x02'
-            b'\x02\x4c\x01\x00\x3b'
-        )
-        cls.uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=cls.small_gif,
-            content_type='image/gif'
-        )
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test-slug',
@@ -46,7 +34,6 @@ class PostCreateForm(TestCase):
             text='Тестовый заголовок',
             group=cls.group,
             author=cls.user,
-            image=cls.uploaded,
         )
         cls.comment = Comment.objects.create(
             text='комментарий',
@@ -60,6 +47,18 @@ class PostCreateForm(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        self.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
@@ -85,8 +84,49 @@ class PostCreateForm(TestCase):
                 text='Тестовый текст',
                 group=self.group.id,
                 author=self.user,
+                image='posts/small.gif'
             ).exists()
         )
+
+    def test_create_comment(self):
+        """Проверка создания коммента в Post"""
+        comment_count = Comment.objects.count()
+        form_data = {
+            'post': self.post,
+            'text': 'Тестовый коммент',
+            'author': self.user
+        }
+        response = self.authorized_client.post(
+            reverse('posts:add_comment',
+                    kwargs={'post_id': PostCreateForm.post.id}),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(response, reverse(
+            'posts:post_detail', kwargs={'post_id': PostCreateForm.post.id})
+        )
+        self.assertEqual(Comment.objects.count(), comment_count + 1)
+        self.assertTrue(
+            Comment.objects.filter(
+                text='Тестовый коммент',
+                post=self.post,
+                author=self.user,
+            ).exists()
+        )
+
+    def test_comment_in_post_detail(self):
+        """Проверка что коммент появился с Post_detail"""
+        comment = Comment.objects.create(
+            text='комментарий',
+            author=self.user,
+            post=self.post,
+        )
+        response = self.authorized_client.get(
+            reverse('posts:post_detail',
+                    kwargs={'post_id': self.post.id}),
+        )
+        self.assertEqual(response.context['comments'][0].text,
+                         comment.text)
 
     def test_create_post_without_group(self):
         """Проверка создания записи в Post без группы"""
@@ -229,6 +269,7 @@ class PostCreateForm(TestCase):
         form_data = {
             'group': self.group.id,
             'text': PostCreateForm.post.text,
+            'image': self.uploaded
         }
         response = self.authorized_client.post(
             reverse('posts:post_edit',
@@ -245,6 +286,7 @@ class PostCreateForm(TestCase):
                 group=self.group.id,
                 author=self.user,
                 pub_date=self.post.pub_date,
+                image='posts/small.gif'
             ).exists())
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(Post.objects.count(), posts_count)
