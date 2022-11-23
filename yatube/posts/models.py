@@ -94,4 +94,4 @@ class Follow(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.user + self.author
+        return f'Подпищек - {self.user}, автор - {self.author}'

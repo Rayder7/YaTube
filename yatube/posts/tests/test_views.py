@@ -207,6 +207,17 @@ class PostPagesTests(TestCase):
         new_posts = response_new.content
         self.assertNotEqual(old_posts, new_posts)
 
+    def test_follow_auth(self):
+        """Проверка прав на подписку/отписку авторизованного пользователя"""
+        response = self.authorized_client.post(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.post.author}),
+            follow=True
+        )
+        self.assertRedirects(response, reverse(
+            'posts:profile', kwargs={'username': 'SanyaMochalin'}))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
 
 class PaginatorViewsTest(TestCase):
     NUM_TASK: int = 13

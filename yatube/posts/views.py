@@ -24,9 +24,11 @@ def index(request):
     posts = Post.objects.all()
     page_obj = paginator_page(request, posts, NUM_POSTS_NEED)
     follow_index = True
+    switcher = True
     context = {
         'page_obj': page_obj,
         'follow_index': follow_index,
+        'switcher': switcher,
     }
     return render(request, template, context)
 
@@ -143,8 +145,7 @@ def follow_index(request):
 def profile_follow(request, username):
     user = request.user
     author = get_object_or_404(User, username=username)
-    follower = Follow.objects.filter(user=user, author=author)
-    if user != author and not follower.exists():
+    if user != author:
         Follow.objects.get_or_create(
             user=user, author=author
         )

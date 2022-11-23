@@ -265,11 +265,23 @@ class PostCreateForm(TestCase):
         """Проверка, что при отправке поста с картинкой
         через форму PostForm редактируется запись в БД
         """
+        cool_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        cool_uploaded = SimpleUploadedFile(
+            name='cool.gif',
+            content=cool_gif,
+            content_type='image/gif'
+        )
         posts_count = Post.objects.count()
         form_data = {
             'group': self.group.id,
             'text': PostCreateForm.post.text,
-            'image': self.uploaded
+            'image': cool_uploaded
         }
         response = self.authorized_client.post(
             reverse('posts:post_edit',
@@ -286,7 +298,7 @@ class PostCreateForm(TestCase):
                 group=self.group.id,
                 author=self.user,
                 pub_date=self.post.pub_date,
-                image='posts/small.gif'
+                image='posts/cool.gif'
             ).exists())
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(Post.objects.count(), posts_count)
@@ -296,7 +308,6 @@ class PostCreateForm(TestCase):
         и проверка на появления комментария на странице поста
         """
         form_data = {
-            'author': PostCreateForm.post.author,
             'text': PostCreateForm.comment.text,
         }
         response = self.authorized_client.post(
@@ -309,24 +320,8 @@ class PostCreateForm(TestCase):
                              f'/posts/{self.post.id}/')
         self.assertTrue(
             Comment.objects.filter(
-                id=self.comment.post.id,
+                post=PostCreateForm.post,
                 text=self.comment.text,
                 author=self.comment.author,
             ).exists())
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-
-    def test_follow_auth(self):
-        """Проверка прав на подписку/отписку авторизованного пользователя"""
-        form_data = {
-            'group': self.group.id,
-            'text': PostCreateForm.post.text,
-        }
-        response = self.authorized_client.post(
-            reverse('posts:profile_follow',
-                    kwargs={'username': self.post.author}),
-            data=form_data,
-            follow=True
-        )
-        self.assertRedirects(response, reverse(
-            'posts:profile', kwargs={'username': 'SanyaMochalin'}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
