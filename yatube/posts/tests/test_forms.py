@@ -35,11 +35,6 @@ class PostCreateForm(TestCase):
             group=cls.group,
             author=cls.user,
         )
-        cls.comment = Comment.objects.create(
-            text='комментарий',
-            author=cls.user,
-            post=cls.post,
-        )
 
     @classmethod
     def tearDownClass(cls):
@@ -304,11 +299,9 @@ class PostCreateForm(TestCase):
         self.assertEqual(Post.objects.count(), posts_count)
 
     def test_add_comment(self):
-        """Проверка прав пользователя на создание комментария
-        и проверка на появления комментария на странице поста
-        """
+        """Проверка прав пользователя на создание комментария"""
         form_data = {
-            'text': PostCreateForm.comment.text,
+            'text': 'Лучший комментарий',
         }
         response = self.authorized_client.post(
             reverse('posts:add_comment',
@@ -321,7 +314,6 @@ class PostCreateForm(TestCase):
         self.assertTrue(
             Comment.objects.filter(
                 post=PostCreateForm.post,
-                text=self.comment.text,
-                author=self.comment.author,
+                text='Лучший комментарий',
             ).exists())
         self.assertEqual(response.status_code, HTTPStatus.OK)
