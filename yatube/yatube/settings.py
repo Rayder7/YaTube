@@ -10,8 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+from dotenv import load_dotenv
 import os
 
+
+load_dotenv()
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -23,13 +26,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '(%_al%12@$uf^rzd*$uhf9$ss6-rwka5s18tm*vcrc0%z6&(et'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
-    'localhost',
+    '84.201.161.254',
     '127.0.0.1',
-    '[::1]',
-    'testserver',
+    'localhost',
+    'rayder.hopto.org'
 ]
 
 
@@ -87,8 +90,12 @@ WSGI_APPLICATION = 'yatube.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postresql'),
+        'NAME': os.getenv('DB_NAME'),
+	'USER': os.getenv('POSTGRES_USER'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+	'HOST': os.getenv('DB_HOST'),
+	'PORT': os.getenv('DB_PORT')
     }
 }
 
@@ -130,7 +137,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'posts:index'
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
